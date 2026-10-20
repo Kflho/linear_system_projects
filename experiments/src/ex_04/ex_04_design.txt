@@ -18,14 +18,13 @@
   K_aug = [-149.  -22. -500. -440. -720.]
   k_x1 = -149.0000  k_x2 = -22.0000
   kyita3(p) = -500.0000  kyita2(q) = -440.0000  kyita1(s) = -720.0000
-  对象实现系数：gain1 = 1(干扰), gain2 = -2, gain6 = -4(内模), gain7 = 2
+  对象实现系数：gain1 = 2(x2' 那路的 d 权重), gain2 = -2, gain6 = -4(内模), gain7 = 2
   闭环极点 = [-6.+0.j -5.+0.j -4.+0.j -3.+0.j -2.+0.j]   稳定 True
   跟踪零点检查 |e/r(j2)| = 2.41e-16（应为 0）
-  干扰零点检查 |d->e 直流增益| = 0.00e+00（应为 0）
+  干扰零点检查 |d->e 直流增益| = 2.35e-17（应为 0）
 
-备注：模型2 里 d 的两路注入共用 gain1，等效 E = [1;1]；任务书是 E = [1;2]。
-      内模含 1/s，对任意常值干扰都能压到零，所以跟踪结论不受影响；
-      要严格对齐任务书，在 x2 的导数那一路单独接一个 x2 的增益即可（设计不用重算）。
+备注：两个模型都已自带 Constant 0（外系统自治输入）和变量初值 v_start，
+      模型2 的 d 拆成两路（x1' 直接 +d，x2' 经 gain1=2），即 E = [1;2] 与任务书一致。
 
 输出: D:\data\local\study\postgraduate\linear_system\projects\experiments\src\ex_04\ex_04_1_design.json
       D:\data\local\study\postgraduate\linear_system\projects\experiments\src\ex_04\ex_04_2_design.json

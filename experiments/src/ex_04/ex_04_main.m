@@ -41,7 +41,7 @@ Tf2 = 25;
 %% ==================== 任务一：倒立摆 + 内模 1/(s^2+4) ====================
 A1 = d1.A; B1 = d1.B; C1 = d1.C; D1 = d1.D; c1 = d1.c(:).';
 Av = d1.A_v; Bv = d1.B_v; Cv = d1.C_v; Dv = d1.D_v;
-w0 = d1.Initial_v(:); rg = d1.r(:).';
+w0 = d1.v_start(:); rg = d1.r(:).';
 Kx1 = d1.k_x; ky2 = d1.kyita2; ky1 = d1.kyita1; wfb = d1.w;
 K1 = [Kx1, ky2, ky1];                     % 增广状态顺序 [x(4); a; b]
 Ac1 = d1.design.Ac; Bc1 = d1.design.Bc;
@@ -114,7 +114,7 @@ E2 = d2.design.E_model;
 
 say('================ 任务二：渐近跟踪 + 干扰抑制（内模原理） ================\n');
 say('【对象】x'' = [0 1; -2 2] x + [0;1] u + E d,  y = x1,  d = 1(t)\n');
-say('  模型里 d 的两路注入共用 gain1 -> E = [1;1]；任务书 E = [1;2]（见 references）\n');
+say('  d 从两路进：x1'' 直接 +d，x2'' 经 gain1=2 -> E = [1;2]（与任务书一致）\n');
 say('【内模】p'' = e - 4 q,  q'' = p,  s'' = q     （1/(s(s^2+4))：既管 r 的 cos 也管 d 的阶跃）\n');
 say('【控制】u = kyita3 p + kyita2 q + kyita1 s + k_x1 x1 + k_x2 x2\n');
 say('  K_aug = [k_x1, k_x2, kyita3, kyita2, kyita1] = %s\n', mat2str(K2, 8));

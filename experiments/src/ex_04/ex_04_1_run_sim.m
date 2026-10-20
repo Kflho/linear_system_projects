@@ -4,10 +4,10 @@ function [t, X, U, R, Y, ERR, mdlFile] = ex_04_1_run_sim(d, Tf, maxStep)
 %   [t,X,U,R,Y,ERR,mdlFile] = ex_04_1_run_sim(d, Tf, maxStep)
 %
 %   d 是 ex_04_design.py 写出的 ex_04_1_design.json（jsondecode 后的结构体），
-%   键名就是模型变量名：A,B,C,D,c,A_v,B_v,C_v,D_v,Initial_v,r,k_x,kyita1,kyita2,w。
+%   键名就是模型变量名：A,B,C,D,c,A_v,B_v,C_v,D_v,v_start,r,k_x,kyita1,kyita2,w。
 %
 %   模型结构（手搭）：
-%       State-Space（A_v..）  w' = A_v w            -> 参考发生器，输入口空着
+%       State-Space（A_v..）  w' = A_v w + B_v*0，初值 v_start   -> 参考发生器
 %       Gain r  [0.1 0]       r = r*w
 %       State-Space1（A..D）  x' = A x + B u，C = eye(4) 输出全部状态
 %       Gain c  [1 0 0 0]     y = c*x
@@ -16,11 +16,8 @@ function [t, X, U, R, Y, ERR, mdlFile] = ex_04_1_run_sim(d, Tf, maxStep)
 %       Integrator/Integrator1  a、b 两级积分：b' = a
 %       Sum2 '|+++'           u = kyita2*a + kyita1*b + k_x*x
 %
-%   只在内存里改模型（跑完 close_system(...,0)，磁盘 .slx 不动）：
-%       1) 把变量塞进 base 工作区；
-%       2) 所有 Gain 改成 Matrix(K*u)（1x4、1x2 的增益乘列向量）；
-%       3) 参考发生器的输入口没接线（w' = A_v w 自治）→ 补一个 Constant 0；
-%          它的初值在模型里写死成 0 → 这里显式设成 Initial_v（否则 r ≡ 0）。
+%   模型自带的 Constant 0 已经接好外系统的自治输入，初值也是变量 v_start，
+%   所以这里只需要：变量塞 base + 把 Gain 改成矩阵乘，其余一律不动模型。
 %
 %   Tf 默认 15 s（≈ 4.8 个参考周期），maxStep 默认 Tf/2000。
 
@@ -39,7 +36,7 @@ cleanup = onCleanup(@() close_system(mdl, 0)); %#ok<NASGU>
 
 % ---- 变量进 base --------------------------------------------------------
 flds = {'A', 'B', 'C', 'D', 'c', 'A_v', 'B_v', 'C_v', 'D_v', ...
-        'Initial_v', 'r', 'k_x', 'kyita1', 'kyita2', 'w'};
+        'v_start', 'r', 'k_x', 'kyita1', 'kyita2', 'w'};
 for i = 1:numel(flds)
     if ~isfield(d, flds{i})
         error('ex_04_1_run_sim:missingVar', 'ex_04_1_design.json 里缺变量 %s', flds{i});
@@ -53,22 +50,14 @@ for i = 1:numel(gains)
     set_param(gains{i}, 'Multiplication', 'Matrix(K*u)');
 end
 
-% ---- State-Space：补自治输入、设参考初值 ---------------------------------
+% ---- State-Space 输入口检查（模型里已接 Constant 0）----------------------
 ssBlks = find_system(mdl, 'SearchDepth', 1, 'BlockType', 'StateSpace');
 for i = 1:numel(ssBlks)
-    name = get_param(ssBlks{i}, 'Name');
     ph = get_param(ssBlks{i}, 'PortHandles');
-    if get_param(ph.Inport(1), 'Line') == -1          % 输入口空着就补 0
-        zeroName = ['Zero_' name];
-        if isempty(find_system(mdl, 'SearchDepth', 1, 'Name', zeroName))
-            pos = get_param(ssBlks{i}, 'Position');
-            add_block('simulink/Sources/Constant', [mdl '/' zeroName], 'Value', '0', ...
-                      'Position', [pos(1) - 60, pos(2), pos(1) - 20, pos(2) + 30]);
-        end
-        add_line(mdl, [zeroName '/1'], [name '/1'], 'autorouting', 'on');
-    end
-    if strcmp(get_param(ssBlks{i}, 'A'), 'A_v')       % 参考发生器初值
-        set_param(ssBlks{i}, 'X0', mat2str(d.Initial_v(:), 16));
+    if get_param(ph.Inport(1), 'Line') == -1
+        error('ex_04_1_run_sim:unconnected', ...
+            'State-Space「%s」的输入口没接线（自治的话接一个 Constant 0）。', ...
+            get_param(ssBlks{i}, 'Name'));
     end
 end
 

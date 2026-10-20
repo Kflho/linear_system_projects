@@ -9,10 +9,12 @@
 
   ex_04_2_sim.slx —— 渐近跟踪 + 干扰抑制（内模原理）
       对象 x' = [[0,1],[-2,2]] x + [0;1] u + E d,  y = [1 0] x,  d = 1(t), r = 0.1cos2t
-      模型里对象是积分链实现的：x1' = d + x2, x2' = d + u - 2x1 + 2x2
-          （d 两路共用一个 gain1，即 E = [1;1]；任务书是 [1;2]，见备注）
+      模型里对象是积分链实现的：x1' = d + x2, x2' = 2d + u - 2x1 + 2x2   （E = [1;2]）
       内模：p' = e - 4q, q' = p, s' = q  （1/(s(s^2+4))，同时含 1/s 和 1/(s^2+4)）
       控制：u = kyita3 p + kyita2 q + kyita1 s + k_x1 x1 + k_x2 x2
+
+两个模型现在都自带 Constant 0（外系统自治输入）和变量初值 v_start，可以直接跑；
+本脚本输出的键名就是模型里的变量名。
 
 设计流程（算法都在 linear_system_utils.cal_matrix_operation.cal_output_regulation）：
     1) cal_internal_model：按模型实际的 Ac/Bc 拼增广系统 [x; eta]
@@ -70,8 +72,8 @@ AC2 = np.array([[0.0, -4.0, 0.0],
                 [1.0, 0.0, 0.0],
                 [0.0, 1.0, 0.0]])                 # p' = e - 4q, q' = p, s' = q
 BC2 = np.array([[1.0], [0.0], [0.0]])
-# 模型里对象是用积分链搭的：x1' = d + x2, x2' = d + u - 2x1 + 2x2
-GAIN1 = 1.0        # d 的注入（模型两路共用 → E = [1;1]；任务书 [1;2] 需再加一路）
+# 模型里对象是用积分链搭的：x1' = d + x2, x2' = 2d + u - 2x1 + 2x2
+GAIN1 = 2.0        # d 进 x2' 那一路的权重（x1' 那一路直接接 d，权重 1）-> E = [1;2]
 GAIN2 = -2.0       # x1 到 x2' 的系数
 GAIN6 = -4.0       # 内模反馈
 GAIN7 = 2.0        # x2 到 x2' 的系数
@@ -135,7 +137,7 @@ def main():
         "C": np.eye(4), "D": np.zeros((4, 1)),      # State-Space1 输出全部状态（C = In）
         "c": C_Y1,                                   # y = c x
         "A_v": A_V, "B_v": B_V, "C_v": C_V, "D_v": D_V,
-        "Initial_v": INIT_V,
+        "v_start": INIT_V,
         "r": R_GAIN,
         "k_x": k_x, "kyita2": kyita2, "kyita1": kyita1, "w": W1,
         # ---- 设计/复核 ----
@@ -162,7 +164,7 @@ def main():
     B_ref2 = np.vstack([np.zeros((A2.shape[0], 1)), -BC2])
     A_cl2, zero_r2 = check_tracking(A_aug2, B_aug2, np.zeros((1, 5)), K2, B_ref2, C_Y2)
     # 常值干扰 d 的直流增益（B_d_aug 在状态 x 上，权重 E；模型现状 E = [1;1]）
-    E_model = np.array([[GAIN1], [GAIN1]])
+    E_model = np.array([[1.0], [GAIN1]])
     B_d2 = np.vstack([E_model, np.zeros((AC2.shape[0], 1))])
     Cx2 = np.hstack([C_Y2, np.zeros((1, AC2.shape[0]))])
     dc_d2 = float(abs((Cx2 @ np.linalg.solve(-A_cl2, B_d2))[0, 0]))
@@ -170,7 +172,7 @@ def main():
     data2 = {
         # ---- Simulink 变量（ex_04_2_sim.slx 直接用）----
         "A_v": A_V, "B_v": B_V, "C_v": C_V, "D_v": D_V,
-        "Initial_v": INIT_V,
+        "v_start": INIT_V,
         "r": R_GAIN,
         "A_d": A_D, "B_d": B_D, "C_d": C_D, "D_d": D_D, "d_start": D_START,
         "gain1": GAIN1, "gain2": GAIN2, "gain6": GAIN6, "gain7": GAIN7,
@@ -187,7 +189,7 @@ def main():
             "Ac": AC2, "Bc": BC2,
             "zero_at_r": zero_r2,
             "dc_gain_d_to_e": dc_d2,
-            "E_model": E_model,
+            "E_model": E_model,  # [1; 2]，与模型接线一致
         },
     }
 
@@ -218,16 +220,15 @@ def main():
     lines.append(f"  K_aug = {np.array2string(K2.ravel(), precision=4)}")
     lines.append(f"  k_x1 = {K2[0, 0]:.4f}  k_x2 = {K2[0, 1]:.4f}")
     lines.append(f"  kyita3(p) = {K2[0, 2]:.4f}  kyita2(q) = {K2[0, 3]:.4f}  kyita1(s) = {K2[0, 4]:.4f}")
-    lines.append(f"  对象实现系数：gain1 = {GAIN1:g}(干扰), gain2 = {GAIN2:g}, "
+    lines.append(f"  对象实现系数：gain1 = {GAIN1:g}(x2' 那路的 d 权重), gain2 = {GAIN2:g}, "
                  f"gain6 = {GAIN6:g}(内模), gain7 = {GAIN7:g}")
     lines.append(f"  闭环极点 = {np.array2string(np.sort_complex(cl2['poles']), precision=4)}"
                  f"   稳定 {cl2['stable']}")
     lines.append(f"  跟踪零点检查 |e/r(j2)| = {zero_r2:.2e}（应为 0）")
     lines.append(f"  干扰零点检查 |d->e 直流增益| = {dc_d2:.2e}（应为 0）")
     lines.append("")
-    lines.append("备注：模型2 里 d 的两路注入共用 gain1，等效 E = [1;1]；任务书是 E = [1;2]。")
-    lines.append("      内模含 1/s，对任意常值干扰都能压到零，所以跟踪结论不受影响；")
-    lines.append("      要严格对齐任务书，在 x2 的导数那一路单独接一个 x2 的增益即可（设计不用重算）。")
+    lines.append("备注：两个模型都已自带 Constant 0（外系统自治输入）和变量初值 v_start，")
+    lines.append("      模型2 的 d 拆成两路（x1' 直接 +d，x2' 经 gain1=2），即 E = [1;2] 与任务书一致。")
     lines.append("")
     lines.append(f"输出: {OUT_JSON_1}")
     lines.append(f"      {OUT_JSON_2}")
