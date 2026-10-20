@@ -69,7 +69,7 @@ matlab -batch "cd('experiments'); run('src/ex_01/ex_01_main.m')"
 | 实验一 | 状态反馈极点配置（卫星） | `src/ex_01/` | `bin/data/ex_01/` | `bin/exports/ex_01.md` |
 | 实验二 | 输入输出解耦控制（卫星） | `src/ex_02/` | `bin/data/ex_02/` | `bin/exports/ex_02.md` |
 | 实验三 | 输出调节 · 静态状态反馈（倒立摆） | `src/ex_03/` | `bin/data/ex_03/` | `bin/exports/ex_03.md` |
-| 实验四 | 输出调节 · 内模原理（倒立摆） | 待做 | | |
+| 实验四 | 输出调节 · 内模原理（倒立摆 / 跟踪+抗扰） | `src/ex_04/` | `bin/data/ex_04/` | `bin/exports/ex_04.md` |
 | 实验五 | 观测器设计（磁盘驱动器） | 待做 | | |
 | 实验六 | 观测器 + 状态反馈 | 待做 | | |
 
