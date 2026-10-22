@@ -8,11 +8,14 @@
 
 | 文件 | 作用 |
 |---|---|
-| `ex_XX_design.py` | 建模型、算设计量（$K$、$H$ 等），输出 `ex_XX_design.json` + `.txt` 摘要 |
+| `ex_XX_design.py` | 建模型、算设计量（$K$、$H$、$L$ 等），输出 `ex_XX_design.json` + `.txt` 摘要 |
 | `ex_XX_design.json` | 设计结果，供 MATLAB 读取（唯一数据源，避免 MATLAB 里再写一遍模型） |
 | `ex_XX_main.m` | 复核 + 解析响应 + 跑 Simulink + 出图 + 写日志 → `bin/data/ex_XX/` |
 | `ex_XX_run_sim.m` | 给手搭的 `.slx` 灌参数并仿真（只在内存里改，不保存磁盘文件） |
 | `ex_XX_sim.slx` | 手搭的 Simulink 模型 |
+
+> 实验五、实验六没有后两件：任务书里那几张 Simulink 图只是示例，`ex_0X_main.m` 直接
+> 用闭环矩阵的 `expm` 解析解出曲线（`design.A_cl` + `design.z0`），不需要搭模型。
 
 ## common/
 
@@ -32,6 +35,7 @@
 | 4.4 极点配置公式（已改为返回 K） | `cal_state_feedback_pole_placement(A,B,poles)` → `K, info` |
 | 解耦控制（实验二） | `cal_decoupling_control` / `cal_r` / `cal_Tau` |
 | Riccati | `cal_algebra_Riccati_function` |
+| 观测器（实验五、六） | `cal_full_order_observer` / `cal_reduced_order_observer` / `cal_function_observer`（`cal_matrix_operation/cal_observer/`） |
 
 ## 运行（以实验一为例）
 
