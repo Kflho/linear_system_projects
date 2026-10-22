@@ -1,0 +1,14 @@
+{
+  "eq_cw": "\\ddot x-2\\omega\\dot y-3\\omega^{2}x=u_r,\\qquad \\ddot y+2\\omega\\dot x=u_t",
+  "eq_A": "A=\\begin{bmatrix}0&1&0&0\\\\3\\omega^{2}&0&0&2\\omega\\\\0&0&0&1\\\\0&-2\\omega&0&0\\end{bmatrix}",
+  "eq_B": "B=\\begin{bmatrix}0&0\\\\1&0\\\\0&0\\\\0&1\\end{bmatrix}",
+  "eq_C": "C=\\begin{bmatrix}1&0&0&0\\\\0&0&1&0\\end{bmatrix}",
+  "eq_gamma": "\\gamma(s)=(s+2)^{2}\\left[(s+2)^{2}+1\\right]=s^{4}+8s^{3}+25s^{2}+36s+20",
+  "eq_k1": "K_1=\\begin{bmatrix}-3&0&1&-2\\\\-20&-34&-25&-8\\end{bmatrix}",
+  "eq_k2": "K_2=\\begin{bmatrix}-8&-4&0&-2\\\\0&2&-4&-4\\end{bmatrix}",
+  "eq_relorder": "\\ddot y_1=3x_1+2x_4+u_r,\\qquad \\ddot y_2=-2x_2+u_t",
+  "eq_bstar": "d_1=d_2=2,\\quad B^{\\ast}=CAB=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix},\\quad \\sum_{i=1}^{2}d_i=4=n",
+  "eq_blkdiag": "A+BK_2=\\mathrm{blkdiag}\\left(\\begin{bmatrix}0&1\\\\-5&-4\\end{bmatrix},\\;\\begin{bmatrix}0&1\\\\-4&-4\\end{bmatrix}\\right)",
+  "eq_gs": "G_{(K,H)}(s)=C(sI-A-BK)^{-1}BH=\\frac{1}{s^{2}+4s+5}\\oplus\\frac{1}{s^{2}+4s+4}",
+  "eq_h": "H=\\mathrm{diag}(5,4)\\;\\Rightarrow\\;G(0)H=I_2"
+}
